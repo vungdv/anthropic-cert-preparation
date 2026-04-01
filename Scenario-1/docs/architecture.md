@@ -333,6 +333,38 @@ Project-scoped `.mcp.json` supports environment variable expansion (e.g., `${GIT
 | ADR-3 | Structured errors with categories           | Enables agent to distinguish retryable vs terminal failures              |
 | ADR-4 | stdio transport for local dev               | Zero deployment overhead; switch to Streamable HTTP for production       |
 | ADR-5 | Seed data covers all edge cases             | Ensures every policy branch is testable without manual data setup        |
+| ADR-6 | Claude Agent SDK over alternatives          | See [ADR-6](#adr-6--llm-agent-framework) below                          |
+
+### ADR-6 — LLM Agent Framework
+
+**Status:** Accepted
+
+**Context:** Multiple frameworks can orchestrate an LLM-powered customer support agent.
+
+**Alternatives considered:**
+
+| Framework | Pros | Cons |
+|---|---|---|
+| **Claude Agent SDK** | Native MCP support, `Task` tool for subagents, `PostToolUse` hooks, `fork_session`, `allowedTools` scoping | Tied to Claude models |
+| **Vercel AI SDK** | Native Next.js integration, multi-provider (Claude, GPT, Gemini) | No built-in multi-agent orchestration, no hooks for tool interception |
+| **LangChain / LangGraph** | Large ecosystem, graph-based orchestration, provider-agnostic | Heavy abstraction layer, JS version lags behind Python |
+| **OpenAI Agents SDK** | Built-in handoff patterns, guardrails | Tied to OpenAI models |
+| **Amazon Bedrock Agents** | Managed AWS service, Lambda integration | Vendor lock-in, less control over agent behavior |
+| **Google ADK** | Multi-agent, Gemini integration | Early stage, Python only |
+| **CrewAI** | Role-based multi-agent collaboration | Python only, less suited for real-time support |
+| **AutoGen** | Strong multi-agent conversation patterns | Research-focused, Python only |
+| **Mastra** | Lightweight TypeScript, built-in tool calling | Smaller community, fewer patterns for complex orchestration |
+
+**Decision:** Claude Agent SDK
+
+**Rationale:**
+- Native MCP integration — tools defined once, discoverable automatically
+- Subagent spawning via `Task` tool with isolated context and `allowedTools` scoping
+- `PostToolUse` hooks for deterministic data normalization and policy enforcement
+- `fork_session` for exploring divergent approaches from a shared baseline
+- Directly aligned with Claude Certified Architect exam domains
+
+**Trade-off:** Locked to Claude models. If multi-provider support becomes a requirement, Vercel AI SDK is the closest alternative given our Next.js stack.
 
 ---
 
