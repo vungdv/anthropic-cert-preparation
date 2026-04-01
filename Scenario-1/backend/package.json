@@ -1,0 +1,9 @@
+{
+  "name": "customer-support-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.13.0"
+  }
+}
