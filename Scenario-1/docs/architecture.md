@@ -49,7 +49,7 @@ Build a customer support resolution agent using the Claude Agent SDK that handle
 ```mermaid
 graph LR
     Customer([Customer]) -->|chat| Agent[Claude Agent]
-    Agent -->|get_customer\nlookup_order\nprocess_refund\nescalate_to_human| Backend[Backend Systems]
+    Agent -->|get_customer<br/>lookup_order<br/>process_refund<br/>escalate_to_human| Backend[Backend Systems]
     Agent -->|structured handoff| Human([Human Agent])
     Backend -->|data| DB[(PostgreSQL)]
 ```
@@ -58,9 +58,9 @@ graph LR
 
 ```mermaid
 graph LR
-    CC[Claude Code] -->|stdio\nJSON-RPC| MCP[MCP Server\nmcp/server.js]
-    MCP -->|HTTP REST| API[Backend API\nport 3000]
-    API -->|SQL| DB[(PostgreSQL\nport 5432)]
+    CC[Claude Code] -->|stdio<br/>JSON-RPC| MCP[MCP Server<br/>mcp/server.js]
+    MCP -->|HTTP REST| API[Backend API<br/>port 3000]
+    API -->|SQL| DB[(PostgreSQL<br/>port 5432)]
 
     subgraph Docker Compose
         API
@@ -250,13 +250,13 @@ sequenceDiagram
 graph TB
     subgraph "Developer Machine (WSL Ubuntu)"
         subgraph "Docker Compose"
-            DB["postgres:17-alpine\nport 5432\nvolume: pgdata"]
-            API["node:22-alpine\nport 3000\ndepends_on: db"]
+            DB["postgres:17-alpine<br/>port 5432<br/>volume: pgdata"]
+            API["node:22-alpine<br/>port 3000<br/>depends_on: db"]
             API --> DB
         end
 
         subgraph "Local Node.js"
-            MCP["mcp/server.js\nstdio transport"]
+            MCP["mcp/server.js<br/>stdio transport"]
             CC["Claude Code CLI"]
             CC -->|stdin/stdout| MCP
             MCP -->|"http://localhost:3000"| API
