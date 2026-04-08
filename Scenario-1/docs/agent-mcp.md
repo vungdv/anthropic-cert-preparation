@@ -139,3 +139,71 @@ sequenceDiagram
 The key insight: **Claude only decides**, the **Agent SDK executes**. Each tool call is a separate round-trip to the Claude API. The Agent SDK manages this loop — append tool results, call again, repeat until `stop_reason: "end_turn"`.
 
 ---
+
+## Claude Code as a Real-World Agent
+
+Claude Code (the CLI / VS Code extension) is itself an agent — a pre-built, general-purpose coding agent that implements the exact same pattern shown above.
+
+### How Claude Code Maps to the Agent Pattern
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Claude Code Harness (runs on your machine)         │
+│                                                     │
+│  ┌───────────┐    ┌──────────────────────────────┐  │
+│  │ Your      │    │ Agentic Loop                 │  │
+│  │ message   │───▶│                              │  │
+│  │           │    │  1. Build request (system     │  │
+│  └───────────┘    │     prompt + tools + messages)│  │
+│                   │  2. POST to Claude API        │──┼──▶ Anthropic API
+│                   │  3. Receive response          │◀─┼──
+│                   │  4. If stop_reason="tool_use" │  │
+│                   │     → execute tool locally     │  │
+│                   │     → append result, goto 2   │  │
+│                   │  5. If stop_reason="end_turn" │  │
+│                   │     → display response to you │  │
+│  ┌───────────┐    └──────────────────────────────┘  │
+│  │ Response   │◀───                                  │
+│  └───────────┘                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+### Claude Code's Tool Definitions
+
+Just like the `tools` array you pass in an API request, Claude Code defines its own set of tools. These are sent to the Claude API on every request — Layer 2 (runtime tool definitions) in action.
+
+#### Built-in Tools
+
+| Tool | Purpose |
+|------|---------|
+| **Read** | Read file contents (also images, PDFs, notebooks) |
+| **Write** | Create new files or fully overwrite existing ones |
+| **Edit** | Make targeted string replacements in files |
+| **Bash** | Execute shell commands |
+| **Glob** | Find files by name/pattern (e.g. `**/*.ts`) |
+| **Grep** | Search file contents by regex (built on ripgrep) |
+| **Agent** | Spawn subagents — isolated child agents for parallel subtasks |
+| **Skill** | Invoke slash commands (e.g. `/commit`, `/simplify`) |
+| **ToolSearch** | Fetch schemas for deferred (lazily-loaded) tools |
+
+#### Deferred Tools (loaded on demand)
+
+Not all tools are loaded upfront — some are lazily fetched via `ToolSearch` when needed:
+
+`AskUserQuestion`, `TodoWrite`, `TaskOutput`, `WebFetch`, `WebSearch`, `NotebookEdit`, `EnterPlanMode`, `ExitPlanMode`, `EnterWorktree`, `ExitWorktree`, `CronCreate`, `CronDelete`, `CronList`, `RemoteTrigger`
+
+#### MCP Server Tools (external integrations)
+
+Claude Code also connects to MCP servers configured in your environment, adding tools like documentation search, third-party integrations, etc. These follow the same MCP protocol described earlier in this document.
+
+### Agent SDK vs Claude Code
+
+| | Agent SDK | Claude Code |
+|---|---|---|
+| **What it is** | Library for building custom agents | Pre-built general-purpose coding agent |
+| **Who controls the tools** | You define them | Tools are built in |
+| **Agentic loop** | You implement it | Already implemented |
+| **Use case** | Specialized agents (e.g. customer support) | General software engineering tasks |
+| **Same underlying pattern** | Yes — tool definitions + loop + `stop_reason` check | Yes — identical |
+
+Claude Code is both a practical tool for writing code **and** a reference implementation of the agentic architecture you are building in this scenario.
