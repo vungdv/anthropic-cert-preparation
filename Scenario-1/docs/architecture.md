@@ -73,50 +73,6 @@ graph LR
     end
 ```
 
-### Agent SDK vs Claude API — Sequence Flow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Agent as Agent SDK<br/>(your server)
-    participant Claude as Claude API<br/>(Anthropic)
-    participant Tool as Tools<br/>(your DB / services)
-
-    User->>Agent: "Refund my headphones"
-
-    Note over Agent: Agent builds request:<br/>system prompt + tools + messages
-
-    Agent->>Claude: POST /v1/messages<br/>{model, system, tools, messages}
-    Claude-->>Agent: {stop_reason: "tool_use"<br/>tool: "get_customer", args: {name: "Alice"}}
-
-    Note over Agent: Agent executes tool locally
-    Agent->>Tool: SELECT * FROM customers WHERE name='Alice'
-    Tool-->>Agent: {id: "CUST-1001", status: "active"}
-
-    Note over Agent: Agent appends tool_result<br/>and calls Claude again
-
-    Agent->>Claude: POST /v1/messages<br/>{messages: [..., tool_result]}
-    Claude-->>Agent: {stop_reason: "tool_use"<br/>tool: "lookup_order", args: {customer_id: "CUST-1001"}}
-
-    Agent->>Tool: SELECT * FROM orders WHERE customer_id='CUST-1001'
-    Tool-->>Agent: {order_id: "ORD-5001", amount: 89.99}
-
-    Agent->>Claude: POST /v1/messages<br/>{messages: [..., tool_result]}
-    Claude-->>Agent: {stop_reason: "tool_use"<br/>tool: "process_refund", args: {...}}
-
-    Agent->>Tool: INSERT INTO refunds...
-    Tool-->>Agent: {refund_id: "REF-7001"}
-
-    Agent->>Claude: POST /v1/messages<br/>{messages: [..., tool_result]}
-    Claude-->>Agent: {stop_reason: "end_turn"<br/>text: "Refund of $89.99 processed (REF-7001)"}
-
-    Note over Agent: stop_reason = "end_turn"<br/>Agent exits the loop
-
-    Agent->>User: "Refund of $89.99 processed (REF-7001)"
-```
-
-The key insight: **Claude only decides**, the **Agent SDK executes**. Each tool call is a separate round-trip to the Claude API. The Agent SDK manages this loop — append tool results, call again, repeat until `stop_reason: "end_turn"`.
-
 ---
 
 ## 4. Solution Strategy
